@@ -255,7 +255,7 @@ Known Issues:
 | type | String | Optional | tcp | "tcp" or "udp" L4 transport server type |
 | mode | String | Required | NA |  "standard" or "performance". A Standard mode transport server processes connections using the full proxy architecture. A Performance mode transport server uses FastL4 packet-by-packet TCP behavior. |
 | snat | String | Optional | auto |  |
-| allowVlans | List of Vlans | Optional | Allow traffic from all VLANS | list of Vlan objects to allow traffic from |
+| allowVlans | List of Vlans | Optional | Allow traffic from all VLANS | list of Vlan objects to allow traffic from. Eg: ["/Common/devtraffic"] |
 
 **Pool Components**
 
@@ -280,8 +280,8 @@ Known Issues:
 | PARAMETER | TYPE | REQUIRED | DEFAULT | DESCRIPTION |
 | ------ | ------ | ------ | ------ | ------ |
 | type | String | Required | NA |  http or https |
-| interval | Int | Required | 5 | Seconds between health queries |
-| timeout | Int | Optional | 16 | Seconds before query fails |
+| interval | Int | Required | NA | Seconds between health queries |
+| timeout | Int | Required | NA | Seconds before query fails |
 
 
 # ExternalDNS

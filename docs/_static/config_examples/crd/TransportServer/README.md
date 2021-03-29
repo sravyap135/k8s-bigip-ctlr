@@ -1,8 +1,12 @@
 # Unsecured Transport Server
 
+A Standard virtual server in BIG-IP has configurable settings that allow you to customize what traffic is processed by the virtual server. 
+Transport Server CRD can be used for L4 traffic protocols. As of today, CIS supports Transmission Control Protocol (TCP) and User Datagram Protocol (UDP)
 This section demonstrates the deployment of unsecured Transport Servers.
 
-CIS VirtualServer CRD implements a full proxy architecture for virtual servers configured with a HTTP profile allowing Layer 7 load balancing and SSL processing. User may able to expose non-http traffic such as databases via CIS using Transport Server CRD.
+User may be able to expose non-http traffic such as databases via CIS using Transport Server CRD.
+The TransportServer only forwards the traffic. It is the user’s responsibility to implement secure non-http traffic.
+CIS VirtualServer CRD implements a full proxy architecture for virtual servers configured with a HTTP profile allowing Layer 7 load balancing and SSL processing.
 
 ## TCP Transport Server
 
