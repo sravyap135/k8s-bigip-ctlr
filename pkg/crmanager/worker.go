@@ -110,11 +110,12 @@ func (crMgr *CRManager) processResource() bool {
 		crMgr.processExternalDNS(edns, rKey.rscDelete)
 	case IPAM:
 		ipam := rKey.rsc.(*ficV1.F5IPAM)
-		virtuals := crMgr.getVirtualServersForIPAM(ipam)
+		// getVirtualServersForIPAM
+		virtuals := crMgr.getVirtualForAllMonitoredNamespace()
 		for _, vs := range virtuals {
 			crMgr.processVirtualServers(vs, false)
 		}
-		TSVirtuals := crMgr.getTransportServersForIPAM(ipam)
+		TSVirtuals := crMgr.getTSVirtualForAllMonitoredNamespace()
 		for _, ts := range TSVirtuals {
 			crMgr.processTransportServers(ts, false)
 		}
@@ -288,6 +289,30 @@ func (crMgr *CRManager) processResource() bool {
 	return true
 }
 
+func (crMgr *CRManager) getVirtualForAllMonitoredNamespace() []*cisapiv1.VirtualServer {
+	var allVS []*cisapiv1.VirtualServer
+	if crMgr.watchingAllNamespaces() {
+		return crMgr.getAllVirtualServers("")
+	} else {
+		for ns := range crMgr.namespaces {
+			allVS = append(allVS, crMgr.getAllVirtualServers(ns)...)
+		}
+	}
+	return allVS
+}
+
+func (crMgr *CRManager) getTSVirtualForAllMonitoredNamespace() []*cisapiv1.TransportServer {
+	var allVS []*cisapiv1.TransportServer
+	if crMgr.watchingAllNamespaces() {
+		return crMgr.getAllTransportServers("")
+	} else {
+		for ns := range crMgr.namespaces {
+			allVS = append(allVS, crMgr.getAllTransportServers(ns)...)
+		}
+	}
+	return allVS
+}
+
 // getServiceForEndpoints returns the service associated with endpoints.
 func (crMgr *CRManager) getServiceForEndpoints(ep *v1.Endpoints) *v1.Service {
 
@@ -387,36 +412,20 @@ func (crMgr *CRManager) getAllVirtualServers(namespace string) []*cisapiv1.Virtu
 		log.Errorf("Informer not found for namespace: %v", namespace)
 		return nil
 	}
-	// Get list of VirtualServers and process them.
-	orderedVSs, err := crInf.vsInformer.GetIndexer().ByIndex("namespace", namespace)
-	if err != nil {
-		log.Errorf("Unable to get list of VirtualServers for namespace '%v': %v",
-			namespace, err)
-		return nil
+
+	var objs []interface{}
+	var err error
+	if namespace == "" {
+		objs = crInf.vsInformer.GetIndexer().List()
+	} else {
+		// Get list of VirtualServers and process them.
+		objs, err = crInf.vsInformer.GetIndexer().ByIndex("namespace", namespace)
+		if err != nil {
+			log.Errorf("Unable to get list of VirtualServers for namespace '%v': %v",
+				namespace, err)
+			return nil
+		}
 	}
-
-	for _, obj := range orderedVSs {
-		vs := obj.(*cisapiv1.VirtualServer)
-		// TODO
-		// Validate the VirtualServers List to check if all the vs are valid.
-
-		allVirtuals = append(allVirtuals, vs)
-	}
-
-	return allVirtuals
-}
-
-// getAllVirtualServers returns list of all valid VirtualServers in rkey namespace.
-func (crMgr *CRManager) getAllVSFromAllNamespaces() []*cisapiv1.VirtualServer {
-	var allVirtuals []*cisapiv1.VirtualServer
-
-	crInf, ok := crMgr.getNamespacedInformer("")
-	if !ok {
-		log.Errorf("Informer not found all namespace.")
-		return allVirtuals
-	}
-	// Get list of VirtualServers and process them.
-	objs := crInf.vsInformer.GetIndexer().List()
 
 	for _, obj := range objs {
 		vs := obj.(*cisapiv1.VirtualServer)
@@ -642,11 +651,11 @@ func (crMgr *CRManager) processVirtualServers(
 			ip = virtual.Spec.VirtualServerAddress
 		} else {
 			ip = crMgr.requestIP(ipamLabel, virtual.Spec.Host, "")
-			log.Debugf("[ipam] requested IP for host %v is: %v", virtual.Spec.Host, ip)
 			if ip == "" {
 				log.Debugf("[ipam] requested IP for host %v is empty.", virtual.Spec.Host)
 				return nil
 			}
+			log.Debugf("[ipam] requested IP for host %v is: %v", virtual.Spec.Host, ip)
 		}
 	} else {
 		if virtual.Spec.VirtualServerAddress == "" {
@@ -759,18 +768,18 @@ func (crMgr *CRManager) processVirtualServers(
 func (crMgr *CRManager) getIPAMCR() *ficV1.F5IPAM {
 	cr := strings.Split(crMgr.ipamCR, "/")
 	if len(cr) != 2 {
-		log.Errorf("[ipam] error while retriving IPAM namespace and name.")
+		log.Errorf("[ipam] error while retrieving IPAM namespace and name.")
 		return nil
 	}
 	ipamCR, err := crMgr.ipamCli.Get(cr[0], cr[1])
 	if err != nil {
-		log.Errorf("[ipam] error while retriving IPAM custom resource.")
+		log.Errorf("[ipam] error while retrieving IPAM custom resource.")
 		return nil
 	}
 	return ipamCR
 }
 
-//Request IPAM for virtual IP address
+// Request IPAM for virtual IP address
 func (crMgr *CRManager) requestIP(ipamLabel string, host string, key string) string {
 	ipamCR := crMgr.getIPAMCR()
 	if ipamCR == nil || ipamLabel == "" {
@@ -837,7 +846,11 @@ func (crMgr *CRManager) requestIP(ipamLabel string, host string, key string) str
 		return ""
 	}
 
-	crMgr.ipamCli.Update(IPAMNamespace, ipamCR)
+	_, err := crMgr.ipamCli.Update(IPAMNamespace, ipamCR)
+	if err != nil {
+		log.Errorf("[ipam] Error updating IPAM CR %v", err)
+		return ""
+	}
 	log.Debugf("[ipam] Updated IPAM CR.")
 	return ""
 
@@ -1200,28 +1213,6 @@ func (crMgr *CRManager) processTransportServers(
 }
 
 // getAllTransportServers returns list of all valid TransportServers in rkey namespace.
-func (crMgr *CRManager) getAllTSFromAllNamespaces() []*cisapiv1.TransportServer {
-	var allVirtuals []*cisapiv1.TransportServer
-
-	crInf, ok := crMgr.getNamespacedInformer("")
-	if !ok {
-		log.Errorf("Informer not found for all namespace.")
-		return allVirtuals
-	}
-	// Get list of VirtualServers and process them.
-	orderedVSs := crInf.tsInformer.GetIndexer().List()
-	for _, obj := range orderedVSs {
-		vs := obj.(*cisapiv1.TransportServer)
-		// TODO
-		// Validate the TransportServers List to check if all the vs are valid.
-
-		allVirtuals = append(allVirtuals, vs)
-	}
-
-	return allVirtuals
-}
-
-// getAllTransportServers returns list of all valid TransportServers in rkey namespace.
 func (crMgr *CRManager) getAllTransportServers(namespace string) []*cisapiv1.TransportServer {
 	var allVirtuals []*cisapiv1.TransportServer
 
@@ -1230,15 +1221,21 @@ func (crMgr *CRManager) getAllTransportServers(namespace string) []*cisapiv1.Tra
 		log.Errorf("Informer not found for namespace: %v", namespace)
 		return nil
 	}
+	var objs []interface{}
+	var err error
 	// Get list of VirtualServers and process them.
-	orderedVSs, err := crInf.tsInformer.GetIndexer().ByIndex("namespace", namespace)
-	if err != nil {
-		log.Errorf("Unable to get list of TransportServers for namespace '%v': %v",
-			namespace, err)
-		return nil
+	if namespace == "" {
+		objs = crInf.tsInformer.GetIndexer().List()
+	} else {
+		objs, err = crInf.tsInformer.GetIndexer().ByIndex("namespace", namespace)
+		if err != nil {
+			log.Errorf("Unable to get list of TransportServers for namespace '%v': %v",
+				namespace, err)
+			return nil
+		}
 	}
 
-	for _, obj := range orderedVSs {
+	for _, obj := range objs {
 		vs := obj.(*cisapiv1.TransportServer)
 		// TODO
 		// Validate the TransportServers List to check if all the vs are valid.
@@ -1318,7 +1315,7 @@ func (crMgr *CRManager) getAllServicesFromAllNamespaces() []*v1.Service {
 		return svcList
 	}
 
-	for ns, _ := range crMgr.namespaces {
+	for ns := range crMgr.namespaces {
 		objList := crMgr.crInformers[ns].svcInformer.GetIndexer().List()
 		for _, obj := range objList {
 			svcList = append(svcList, obj.(*v1.Service))
@@ -1326,38 +1323,6 @@ func (crMgr *CRManager) getAllServicesFromAllNamespaces() []*v1.Service {
 	}
 
 	return svcList
-}
-
-// Get List of VirtualServers associated with the IPAM resource
-func (crMgr *CRManager) getVirtualServersForIPAM(ipam *ficV1.F5IPAM) []*cisapiv1.VirtualServer {
-	log.Debug("[ipam] sync ipam starting...")
-	var allVS, vss []*cisapiv1.VirtualServer
-	allVS = crMgr.getAllVSFromAllNamespaces()
-	for _, status := range ipam.Status.IPStatus {
-		for _, vs := range allVS {
-			if status.Host == vs.Spec.Host {
-				vss = append(vss, vs)
-				break
-			}
-		}
-	}
-	return vss
-}
-
-// Get List of TransportServers associated with the IPAM resource
-func (crMgr *CRManager) getTransportServersForIPAM(ipam *ficV1.F5IPAM) []*cisapiv1.TransportServer {
-	var allTS, tss []*cisapiv1.TransportServer
-	allTS = crMgr.getAllTSFromAllNamespaces()
-	for _, status := range ipam.Status.IPStatus {
-		for _, ts := range allTS {
-			key := ts.ObjectMeta.Namespace + "/" + ts.ObjectMeta.Name + "_ts"
-			if status.Key == key {
-				tss = append(tss, ts)
-				break
-			}
-		}
-	}
-	return tss
 }
 
 func (crMgr *CRManager) syncAndGetServicesForIPAM(ipam *ficV1.F5IPAM) []*v1.Service {
@@ -1574,7 +1539,7 @@ func (crMgr *CRManager) processIngressLink(
 
 	if isILDeleted {
 		var delRes []string
-		for k, _ := range crMgr.resources.rsMap {
+		for k := range crMgr.resources.rsMap {
 			rsName := "ingress_link_" + formatVirtualServerName(
 				ingLink.Spec.VirtualServerAddress,
 				0,
