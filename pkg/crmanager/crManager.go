@@ -18,6 +18,8 @@ package crmanager
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -175,10 +177,37 @@ func (crMgr *CRManager) registerIPAMCRD() {
 //Create IPAM CRD
 func (crMgr *CRManager) createIPAMResource() error {
 
-	crName := ipamCRName + "." + DEFAULT_PARTITION
+	frameIPAMResourceName := func(bipUrl string) string {
+		log.Debugf("BIP URL: %v", bipUrl)
+		if net.ParseIP(bipUrl) != nil {
+			return strings.Join([]string{ipamCRName, bipUrl, DEFAULT_PARTITION}, ".")
+		}
+
+		u, err := url.Parse(bipUrl)
+		if err != nil {
+			log.Errorf("Unable to frame IPAM resource name in standard format")
+			return strings.Join([]string{ipamCRName, DEFAULT_PARTITION}, ".")
+		}
+		var host string
+		if strings.Contains(u.Host, ":") {
+			host, _, _ = net.SplitHostPort(u.Host)
+		} else {
+			host = u.Host
+		}
+
+		if host == "" {
+			log.Errorf("Unable to frame IPAM resource name in standard format")
+			return strings.Join([]string{ipamCRName, DEFAULT_PARTITION}, ".")
+		}
+
+		return strings.Join([]string{ipamCRName, host, DEFAULT_PARTITION}, ".")
+	}
+
+	crName := frameIPAMResourceName(crMgr.Agent.BIGIPURL)
 	f5ipam := &ficV1.F5IPAM{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name: crName,
+			Name:      crName,
+			Namespace: IPAMNamespace,
 		},
 		Spec: ficV1.F5IPAMSpec{
 			HostSpecs: make([]*ficV1.HostSpec, 0),
@@ -189,7 +218,7 @@ func (crMgr *CRManager) createIPAMResource() error {
 	}
 
 	// f5ipam.SetResourceVersion(obj.ResourceVersion)
-	ipamCR, err := crMgr.ipamCli.Create(IPAMNamespace, f5ipam)
+	ipamCR, err := crMgr.ipamCli.Create(f5ipam)
 	crMgr.ipamCR = IPAMNamespace + "/" + crName
 	if err != nil {
 		log.Debugf("[ipam] error while creating IPAM custom resource. %v", err)
@@ -245,7 +274,7 @@ func (crMgr *CRManager) setupClients(config *rest.Config) error {
 }
 
 func (crMgr *CRManager) setupInformers() error {
-	for n, _ := range crMgr.namespaces {
+	for n := range crMgr.namespaces {
 		if err := crMgr.addNamespacedInformer(n); err != nil {
 			log.Errorf("Unable to setup informer for namespace: %v, Error:%v", n, err)
 			return err
