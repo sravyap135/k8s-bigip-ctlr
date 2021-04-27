@@ -5,6 +5,7 @@
 
 trigger:
   - azure 
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
