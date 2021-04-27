@@ -11,7 +11,7 @@ pool:
 
 variables:
   imageName: 'f5networks/k8s-bigip-ctlr-devel'
-  quayConnection: 'n.srivastav'
+  quayConnection: 'sravyap135'
   redhatRepo: 'lohiya'
   redhatConnection: 'lohiya.redhat'
 steps:
