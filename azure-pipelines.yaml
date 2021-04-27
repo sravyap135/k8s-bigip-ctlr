@@ -11,7 +11,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'f5networks/k8s-bigip-ctlr-devel'
+  imageName: 'sravyap135/azure-poc'
   quayConnection: 'quay'
   redhatConnection: 'redhat'
 steps:
