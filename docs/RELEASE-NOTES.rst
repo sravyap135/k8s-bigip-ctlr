@@ -2,17 +2,38 @@ Release Notes for Container Ingress Services for Kubernetes & OpenShift
 =======================================================================
 
 
-Next Release
+2.4.1
 -------------
 Added Functionality
 ```````````````````
+* CIS supports `F5 IPAM Controller 0.1.3 <https://github.com/F5Networks/f5-ipam-controller/blob/main/docs/RELEASE-NOTES.rst>`_.
+* Helm Chart Enhancements:
+    - Added support for multiple namespace configuration parameter with CIS operator.
 
 Bug Fixes
 `````````
-* :issues: `1737` Inconsistent ordering of policy rules when adding an Ingress path
+* :issues: `1737` Inconsistent ordering of policy rules when adding an Ingress path.
+* :issues: `1808` K8S BIG-IP Controller upload old certificate to BIG-IP.
+* Stale IPAM CR configuration gets deleted on CIS restart.
+* IPAM allocated IP address now populates for VirtualServer under VSAddress column.
+* CIS supports endpoints created without nodeNames in Cluster mode for Headless Service.
+* Updated helm charts to support IBM platform certification.
+
+Vulnerability Fixes
+```````````````````
++------------------+------------------------------------------------------------------+
+| CVE              | Comments                                                         |
++==================+==================================================================+
+| CVE-2020-36242   | Upgraded cryptography package in f5-common-python repository     |
++------------------+------------------------------------------------------------------+
+| CVE-2020-25659   | Upgraded cryptography package in f5-cccl repository              |
++------------------+------------------------------------------------------------------+
+| CVE-2020-14343   | Upgraded PyYAML package in f5-cccl repository                    |
++------------------+------------------------------------------------------------------+
 
 Limitations
 ```````````
+Due to changes in the BIG-IP Python API, CIS EDNS no longer functions correctly. EDNS will be moving to the AS3 API in the upcoming release
 
 
 2.4.0
@@ -21,8 +42,8 @@ Added Functionality
 ```````````````````
 * CIS is now compatible with:
     -  Kubernetes 1.20
-* CIS supports IP address assignment to kubernetes service type LoadBalancer using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`_. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
-* CIS supports IP address assignment to TransportServer Custom Resources using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`_. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
+* CIS supports IP address assignment to kubernetes service type LoadBalancer using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`__. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
+* CIS supports IP address assignment to TransportServer Custom Resources using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`__. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
 * Added support for defaultRouteDomain in custom resource mode.
 * CIS supports service address reference in VirtualServer and TransportServer Custom Resources.
 * Integrated the IngressLink mode with CRD mode.
@@ -61,8 +82,8 @@ Limitations
 -------------
 Added Functionality
 ```````````````````
-* CIS supports IP address assignment to Virtual Server CRD using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`_. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
-* CIS allows user to leverage Virtual IP address using either `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`_ or virtualServerAddress field in VirtualServer CRD
+* CIS supports IP address assignment to Virtual Server CRD using `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`__. Refer for `Examples <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_.
+* CIS allows user to leverage Virtual IP address using either `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-controller/releases>`__ or virtualServerAddress field in VirtualServer CRD
 * Support Passthrough termination for TLS CRD
 * Added support for AS3 schema minor versions
 * :issues:`1631` Support `caCertificate` for OpenShift Routes
@@ -139,8 +160,8 @@ Added Functionality
     -  Multi cluster support for same domain
     -  Health montior support for monitoring GSLB pools
     -  CIS deployment parameter added `--gtm-bigip-url`, `--gtm-bigip-username`, `--gtm-bigip-password` and `--gtm-credentials-directory` for External DNS.
-    -  `CRD schema definition for External DNS <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/_static/config_examples/crd/ExternalDNS/%20externaldns-customresourcedefinition.yml>`_.
-    -  `CRD examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/_static/config_examples/crd/ExternalDNS>`_.
+    -  `CRD schema definition for External DNS <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/config_examples/crd/ExternalDNS/externaldns-customresourcedefinition.yml>`_.
+    -  `CRD examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/crd/ExternalDNS>`_.
 
 Bug Fixes
 `````````
@@ -177,8 +198,8 @@ Added Functionality
 * CRD TEEMs Integration.
 * Support for AS3 3.23.
 * Upgraded AS3 Schema validation version from v3.11.0-3 to v3.18.0-4.
-* `CRD Schema <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/_static/config_examples/crd/Install/customresourcedefinitions.yml>`_.
-* `CRD Examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/_static/config_examples/crd>`_.
+* `CRD Schema <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/config_examples/crd/Install/customresourcedefinitions.yml>`_.
+* `CRD Examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/crd>`_.
 
 Bug Fixes
 `````````
@@ -206,7 +227,7 @@ Added Functionality
        -   OpenShift 4.5.
        -   AS3 3.21.
 * Custom Resource Definition (CRD) – Preview version available with `virtual-server` and `TLSProfile` custom resources.
-      - `CRD Doc and Examples <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/_static/config_examples/crd/CustomResource.md>`_.
+      - `CRD Doc and Examples <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/config_examples/crd/CustomResource.md>`_.
 * Custom Resource Definition (CRD) – Added Support for k8s Secrets with TLSProfile Custom Resource.
 * Custom Resource Definition (CRD) – Improved the strategy of processing `virtual-server` and `TLSProfile` custom resources.
 * Custom Resource Definition (CRD) – Added support for installation using Helm and Operator.
@@ -263,8 +284,8 @@ Added Functionality
              *  Supports nodelabel in Virtual server CRD
              *  Supports TLSProfile CRD with BIG-IP reference client and server SSL profiles
              *  Supports TLSProfile CRD with K8S secrets reference for client SSL profiles.
-             *  `CRD schema definition for both Virtual server and TLSProfile <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/_static/config_examples/crd/Install/customresourcedefinitions.yml>`_.
-             *  `CRD examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/_static/config_examples/crd>`_.
+             *  `CRD schema definition for both Virtual server and TLSProfile <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/crd/Install/customresourcedefinitions.yml>`_.
+             *  `CRD examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/crd>`_.
 
 Bug Fixes
 `````````
@@ -293,9 +314,9 @@ Guidelines for upgrading to CIS 2.1
 * Those migrating from agent CCCL to agent AS3 :
      - User should clean up LTM resources in BIG-IP partition created by CCCL before migrating to CIS 2.1.
           Steps to clean up LTM resources in BIG-IP partition using AS3
-           *  Use below POST call along with this `AS3 declaration <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/_static/config_examples/example-empty-AS3-declaration.yaml>`_.
+           *  Use below POST call along with this `AS3 declaration <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/example-empty-AS3-declaration.yaml>`_.
                 - mgmt/shared/appsvcs/declare
-           *  Note: Please modify <bigip-ip> in above POST call and <bigip-partition> name in `AS3 declaration <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/_static/config_examples/example-empty-AS3-declaration.yaml>`_
+           *  Note: Please modify <bigip-ip> in above POST call and <bigip-partition> name in `AS3 declaration <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/example-empty-AS3-declaration.yaml>`_
 
 2.0
 -------------
@@ -303,7 +324,7 @@ Added Functionality
 `````````````````````
 * `as3` is the default agent. Use deployment argument `--agent` to configure `cccl` agent.
 * Custom Resource Definition (CRD) – Alpha available with Custom resource `virtual-server`.
-      - `CRD Doc and Examples <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/_static/config_examples/crd/CustomResource.md>`_.
+      - `CRD Doc and Examples <https://github.com/F5Networks/k8s-bigip-ctlr/blob/master/docs/config_examples/crd/CustomResource.md>`_.
 * Added new optional deployment arguments:
        -  `--custom-resource-mode` (default `false`) when set `true` processes custom resources only.
        -  `defined-as3-declaration` for processing user defined AS3 Config Map in CIS watched namespaces.
@@ -357,7 +378,10 @@ Added Functionality
     -  `--tls-version` to enable specific TLS version 1.2/1.3 on BIG-IP. Default 1.2
     -  `--ciphers` to configure cipher suite on BIG-IP. Option valid for TLSv1.2
     -  `--cipher-group` to configure a cipher-group on BIG-IP. Option valid for TLSv1.3
-    Note: both `--ciphers` and `--cipher-group` are mutually exclusive based on the TLS version.
+  
+  .. note::
+     both `--ciphers` and `--cipher-group` are mutually exclusive based on the TLS version.
+
 * Helm charts based `F5 BIG-IP Controller Operator <https://catalog.redhat.com/software/operators/search?p=1&q=f5>`_ published at Redhat Operator Market place.
 * Added optional command line argument `--as3-post-delay` to introduce delay in posting AS3 messages to BIG-IP.
 * Controller is now compatible with OpenShift version 4.2 and AS3 version 3.17.0.
@@ -411,8 +435,8 @@ Bug Fixes
 `````````
 * CIS handles the combination of Edge and Re-encrypt OpenShift routes.
 * CIS does not send encrypted traffic to Edge Route backend.
-* :issues:`1041` CIS now does not log dozens of "INFO" log messages frequently.
-* :issues:`931` Issue resolved for the Prometheus metric status="parse-error".
+* :issues: 1041 CIS now does not log dozens of "INFO" log messages frequently.
+* :issues: 931 Issue resolved for the Prometheus metric status="parse-error".
 
 Limitations
 ```````````
@@ -427,8 +451,8 @@ Bug Fixes
 * Controller handles WAF Policy in the root path of a domain in OpenShift Routes.
 * Controller handles OpenShift Routes with WAF Policy in multiple namespaces.
 * Controller now does not push configuration to BigIP using AS3 for every 30 seconds with no changes.
-* :issues:`1041` Controller now does not log dozens of "INFO" log messages frequently.
-* :issues:`1040` Controller does not crashes if latest AS3 schema is not available.
+* :issues: 1041 Controller now does not log dozens of "INFO" log messages frequently.
+* :issues: 1040 Controller does not crashes if latest AS3 schema is not available.
 * Controller updates Route Status in OpenShift Management Console (OCP 4.x)
 * Controller does not crash when handling Route with WAF Policy that does not have a service.
 
@@ -637,7 +661,7 @@ Added Functionality
 * Added support for OpenShift Origin version 3.7.
 * Added support for Red Hat OpenShift Container Platform (OSCP) version 3.7.
 * (BETA) Added initial basic support for Prometheus metrics.
-* `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-ctlr>`_ pairs with k8s-bigip-ctlr by writing out `virtual-server.f5.com/ip` annotation for IP addresses allocated for host names in Ingresses or ConfigMaps.
+* `F5 IPAM Controller <https://github.com/F5Networks/f5-ipam-ctlr>`__ pairs with k8s-bigip-ctlr by writing out `virtual-server.f5.com/ip` annotation for IP addresses allocated for host names in Ingresses or ConfigMaps.
 * Added support for using `helm`_ to deploy the Controller using the `f5-bigip-ctlr chart`_.
 * Added support for using `helm`_ to deploy Ingress resources using the `f5-bigip-ingress chart`_.
 
@@ -691,7 +715,7 @@ Added Functionality
   - Create VxLAN forwarding database (FDB) addresses for route domains.
   - Ability to change the default route domain for a partition managed by an F5 controller after the controller has deployed.
 
-* Support for `Flannel VxLAN in Kubernetes<https://clouddocs.f5.com/containers/latest/>`_.
+* Support for `Flannel VxLAN in Kubernetes <https://clouddocs.f5.com/containers/latest/>`_.
 * Enhanced options for configuring Virtual IP addresses for Ingress resources:
 
   - Ingresses with the same IP address and port can share a virtual server.
@@ -722,8 +746,8 @@ Limitations
 
   You can find these versions in the iapp package ``iapps-1.0.0.492.0``. To upgrade, you must perform the following:
 
-  - `Download and install the latest iApps templates`_.
-  - `Set the service to use the newer iApp template`_.
+  - Download and install the latest iApps templates `iApps`_.
+  - Set the service to use the newer iApp template `iApps`_.
 
 * Check BIG-IP version compatibility on Application Services (iApps) before deploying. See Application Services Integration iApp.
 * Cannot delete ARP entries on BIG-IP v11.6.1 when running the Controller in Kubernetes with Flannel VXLAN enabled.

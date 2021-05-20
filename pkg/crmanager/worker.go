@@ -291,10 +291,15 @@ func (crMgr *CRManager) processResource() bool {
 	if crMgr.rscQueue.Len() == 0 &&
 		(!reflect.DeepEqual(crMgr.resources.rsMap, crMgr.resources.oldRsMap) ||
 			!reflect.DeepEqual(crMgr.resources.dnsConfig, crMgr.resources.oldDNSConfig)) {
-
+		customProfileStore := NewCustomProfiles()
+		for _, rsCfg := range crMgr.resources.rsMap {
+			for skey, prof := range rsCfg.customProfiles.Profs {
+				customProfileStore.Profs[skey] = prof
+			}
+		}
 		config := ResourceConfigWrapper{
 			rsCfgs:             crMgr.resources.GetAllResources(),
-			customProfiles:     crMgr.customProfiles,
+			customProfiles:     customProfileStore,
 			shareNodes:         crMgr.shareNodes,
 			dnsConfig:          crMgr.resources.dnsConfig,
 			defaultRouteDomain: crMgr.defaultRouteDomain,
@@ -687,6 +692,7 @@ func (crMgr *CRManager) processVirtualServers(
 				return nil
 			}
 			log.Debugf("[ipam] requested IP for host %v is: %v", virtual.Spec.Host, ip)
+			crMgr.updateVirtualServerStatus(virtual, ip)
 		}
 	} else {
 		if virtual.Spec.VirtualServerAddress == "" {
@@ -735,6 +741,7 @@ func (crMgr *CRManager) processVirtualServers(
 		)
 		rsCfg.IntDgMap = make(InternalDataGroupMap)
 		rsCfg.IRulesMap = make(IRulesMap)
+		rsCfg.customProfiles.Profs = make(map[SecretKey]CustomProfile)
 
 		for _, vrt := range virtuals {
 			log.Debugf("Processing Virtual Server %s for port %v",
@@ -1031,7 +1038,7 @@ func (crMgr *CRManager) updatePoolMembersForCluster(
 
 		// TODO: Instead of looping over Spec Ports, get the port from the pool itself
 		for _, portSpec := range svc.Spec.Ports {
-			ipPorts := crMgr.getEndpointsForCluster(portSpec.Name, eps, pool.ServicePort)
+			ipPorts := crMgr.getEndpointsForCluster(portSpec.Name, eps, pool.ServicePort, svc.Spec.ClusterIP)
 			log.Debugf("Found endpoints for backend %+v: %v", svcKey, ipPorts)
 			rsCfg.MetaData.Active = true
 			if len(ipPorts) > 0 {
@@ -1070,6 +1077,7 @@ func (crMgr *CRManager) getEndpointsForCluster(
 	portName string,
 	eps *v1.Endpoints,
 	servicePort int32,
+	clusterIP string,
 ) []Member {
 	nodes := crMgr.getNodesFromCache()
 	var members []Member
@@ -1082,7 +1090,8 @@ func (crMgr *CRManager) getEndpointsForCluster(
 		for _, p := range subset.Ports {
 			if portName == p.Name && servicePort == p.Port {
 				for _, addr := range subset.Addresses {
-					if containsNode(nodes, *addr.NodeName) {
+					// Checking for headless services
+					if containsNode(nodes, *addr.NodeName) || clusterIP == "None" {
 						member := Member{
 							Address: addr.IP,
 							Port:    p.Port,
@@ -1943,4 +1952,16 @@ func getNodeport(svc *v1.Service, servicePort int32) int32 {
 		}
 	}
 	return 0
+}
+
+//Update virtual server status with virtual server address
+func (crMgr *CRManager) updateVirtualServerStatus(vs *cisapiv1.VirtualServer, ip string) {
+	// Set the vs status to include the virtual IP address
+	vsStatus := cisapiv1.VirtualServerStatus{VSAddress: ip}
+	vs.Status = vsStatus
+	_, updateErr := crMgr.kubeCRClient.K8sV1().VirtualServers(vs.ObjectMeta.Namespace).UpdateStatus(context.TODO(), vs, metav1.UpdateOptions{})
+	if nil != updateErr {
+		log.Debugf("Error while updating virtual server status:%v", updateErr)
+		return
+	}
 }
