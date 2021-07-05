@@ -6,17 +6,22 @@
 trigger:
   - release_automation
 
+#    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/') # Only run this step when the trigger event is a tag push
+
+
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'f5networks/k8s-bigip-ctlr-devel'
-  dockerRepo: 'f5networks/k8s-bigip-ctlr'
+  # imageName: 'f5networks/k8s-bigip-ctlr-devel'
+  imageName: 'sravyap135/k8s-bigip-ctlr'
+  dockerRepo: 'sraf5/azure-poc'
   redhatRepo: 'f5networks/k8s-bigip-ctlr'
   quayConnection: 'quay-bot'
   dockerConnection: 'docker-bot'
   redhatConnection: 'redhat-bot'
   redhatPush: 'redhat-push'
+  relVersion: '1.0'
   # scan.connect.redhat.com
 steps:
   - task: Docker@2
@@ -34,29 +39,27 @@ steps:
     inputs:
       command: login
       containerRegistry: $(dockerConnection)
-  - task: CmdLine@2
-    displayName: Check documentation
-    inputs:
-      script: 'make docs'
+  # - task: CmdLine@2
+  #   displayName: Check documentation
+  #   inputs:
+  #     script: 'make docs'
   - task: Docker@2
     displayName: Build from Red Hat Universal Base Image
     inputs:
       command: build
-      containerRegistry: $(quayConnection)
-      repository: $(imageName)
+      containerRegistry: $(dockerConnection)
+      repository: $(dockerRepo)
       Dockerfile: build-tools/Dockerfile-int
       buildContext: .
-      tags: |
-        $(Build.SourceVersion)
-        latest
-      arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
-  - task: Docker@2
-    displayName: Push image to quay.io
-    inputs:
-      command: push
-      containerRegistry: $(quayConnection)
-      repository: $(imageName)
       tags: latest
+      arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
+#  - task: Docker@2
+#    displayName: Push image to quay.io
+#    inputs:
+#      command: push
+#      containerRegistry: $(quayConnection)
+#      repository: $(imageName)
+#      tags: latest
   - task: Docker@2
     displayName: Push image to docker registry
     inputs:
@@ -64,15 +67,15 @@ steps:
       containerRegistry: $(dockerConnection)
       repository: $(dockerRepo)
       tags: |
-        $(BUILD_VERSION)
+        $(relVersion)
         latest
-  - task: Docker@2
-    displayName: Push image to redhat registry
-    inputs:
-      command: push
-      containerRegistry: $(redhatConnection)
-      repository: $(dockerRepo)
-      tags: |
-        $(BUILD_VERSION)
-        latest
+#  - task: Docker@2
+#    displayName: Push image to redhat registry
+#    inputs:
+#      command: push
+#      containerRegistry: $(redhatConnection)
+#      repository: $(dockerRepo)
+#      tags: |
+#        $(BUILD_VERSION)
+#        latest
 
