@@ -46,7 +46,9 @@ steps:
       repository: $(imageName)
       Dockerfile: build-tools/Dockerfile-int
       buildContext: .
-      tags: $(Build.SourceVersion)
+      tags: |
+        $(Build.SourceVersion)
+        latest
       arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
   - task: Docker@2
     displayName: Push image to quay.io
