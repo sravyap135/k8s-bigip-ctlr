@@ -14,8 +14,10 @@ variables:
   quayConnection: 'quay-bot'
   redhatConnection: 'redhat-bot'
 steps:
-  - script: podman login scan.connect.redhat.com
   - bash: podman login -u unused -p $(redhatp) scan.connect.redhat.com
+
+  - script: podman login scan.connect.redhat.com
+    continueOnError: true
   - task: Docker@2
     displayName: Login to redhat registry
     inputs:
