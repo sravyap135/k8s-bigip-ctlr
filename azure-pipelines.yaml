@@ -13,8 +13,17 @@ variables:
   imageName: 'f5networks/k8s-bigip-ctlr-devel'
   quayConnection: 'quay-bot'
   redhatConnection: 'redhat-bot'
+  quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
+  quay_tag: 'latest'
+  redhat_prj: 'cntr-ingress-svcs'
+
 steps:
-  - bash: podman login -u unused -p $(redhatp) scan.connect.redhat.com
+  - bash: 
+      podman login -u unused -p $(redhatp) scan.connect.redhat.com
+      podman pull $(quay_path):$(quay_tag)
+      podman tag $(quay_path}:$(quay_tag) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
+      podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
+
 
   - script: podman login scan.connect.redhat.com
     continueOnError: true
