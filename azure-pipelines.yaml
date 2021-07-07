@@ -16,6 +16,8 @@ variables:
   quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
   quay_tag: 'latest'
   redhat_prj: 'cntr-ingress-svcs'
+  docker_repo: 'sraf5/k8s-bigip-ctlr'
+  docker_version: 'reltest'
 
 steps:
   - script: | 
@@ -23,10 +25,17 @@ steps:
       podman pull $(quay_path):$(quay_tag)
       podman tag $(quay_path):$(quay_tag) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
       podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
+    displayName: 'Push to Redhat'
 
-
-  - script: podman login scan.connect.redhat.com
-    continueOnError: true
+  - script: |
+      docker login https://quay.io
+      docker pull ${quay_path}:${quay_tag}
+      docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
+      docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
+      if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:3} ; fi
+      docker push ${docker_repo}:${docker_version}
+    displayName: 'Push to Docker'
+    continueOnError: false
   - task: Docker@2
     displayName: Login to redhat registry
     inputs:
