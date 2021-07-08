@@ -40,10 +40,10 @@ steps:
     inputs:
       command: login
       containerRegistry: $(quayConnection)
-  - task: CmdLine@2
-    displayName: Check documentation
-    inputs:
-      script: 'make docs'
+  # - task: CmdLine@2
+  #   displayName: Check documentation
+  #   inputs:
+  #     script: 'make docs'
   - task: Docker@2
     displayName: Build from Red Hat Universal Base Image
     inputs:
@@ -54,23 +54,25 @@ steps:
       buildContext: .
       tags: $(Build.SourceVersion)
       arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
-  - task: Docker@2
-    displayName: Push image to quay.io
-    inputs:
-      command: push
-      containerRegistry: $(quayConnection)
-      repository: $(imageName)
-      tags: $(Build.SourceVersion)
+  # - task: Docker@2
+  #   displayName: Push image to quay.io
+  #   inputs:
+  #     command: push
+  #     containerRegistry: $(quayConnection)
+  #     repository: $(imageName)
+  #     tags: $(Build.SourceVersion)
 
   - script: |
+      my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
       podman login -u unused scan.connect.redhat.com -p $(redhat_password)
       podman pull $(quay_path):$(Build.SourceVersion)
       podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
       podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
       podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
-      podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
+      # podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     displayName: 'Push to Redhat'
+
     continueOnError: true
     
   - script: |
@@ -87,6 +89,12 @@ steps:
     displayName: 'Push to DockerHub'
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
+# container:
+#   #      podman login https://quay.io
+      # podman pull $(quay_path):${my_tag}
+      # podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
+      # podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
+      
 
 
     # - script: | 
