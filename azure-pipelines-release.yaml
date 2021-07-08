@@ -65,7 +65,7 @@ steps:
       podman pull ${quay_path}:$(Build.SourceVersion)
       podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
       podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-    condition:  and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+    condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     displayName: 'Push to Redhat'
     continueOnError: true
   - script: |
@@ -75,7 +75,7 @@ steps:
       if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
       docker push ${docker_repo}:${docker_version}
     displayName: 'Push to DockerHub'
-    condition:  and(startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
 
 
