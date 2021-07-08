@@ -79,7 +79,7 @@ stages:
 
 - stage: DeploytoDockerhub
   dependsOn:
-    - Build_and Push to quay
+    - Build_and_Push_to_quay
   condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   displayName: Deploy_to_Dockerhub
   variables:
