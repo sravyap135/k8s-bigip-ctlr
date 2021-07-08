@@ -19,7 +19,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'f5networks/k8s-bigip-ctlr-devel'
+  imageName: 'sravyap135/k8s-bigip-ctlr'
   quayConnection: 'quay-bot'
   redhatConnection: 'redhat-bot'
   quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
@@ -66,6 +66,16 @@ steps:
       podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
       podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
     condition:  and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+    displayName: 'Push to Redhat'
+    continueOnError: true
+  - script: |
+      docker pull ${quay_path}:$(Build.SourceVersion)
+      docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:latest
+      docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:${docker_version}
+      if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+      docker push ${docker_repo}:${docker_version}
+    displayName: 'Push to DockerHub'
+    condition:  and(startsWith(variables['build.sourceBranch'], 'refs/tags/'))
 
 
 
