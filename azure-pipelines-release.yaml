@@ -68,6 +68,7 @@ steps:
       script: |
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         podman login -u unused scan.connect.redhat.com -p $(redhat_password)
+        podman login https://quay.io
         podman pull $(quay_path):$(Build.SourceVersion)
         # podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
         podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
