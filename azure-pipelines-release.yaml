@@ -65,7 +65,7 @@ stages:
     redhat_prj_name: 'cntr-ingress-svcs'
     redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
   jobs:
-    - job: deploy-to-redhat
+    - job: deploy_to_redhat
       steps:
         - script: podman login -u unused scan.connect.redhat.com -p ${redhat_password}
           displayName: 'Login to redhat portal'
