@@ -61,19 +61,19 @@ steps:
       repository: $(imageName)
       tags: $(Build.SourceVersion)
   - script: |
-      podman login -u unused scan.connect.redhat.com -p ${redhat_password}
-      podman pull ${quay_path}:$(Build.SourceVersion)
-      podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-      podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+      podman login -u unused scan.connect.redhat.com -p $(redhat_password)
+      podman pull $(quay_path):$(Build.SourceVersion)
+      podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj):$(redhat_tag)
+      podman push scan.connect.redhat.com/${redhat_prj_id}/$(redhat_prj):$(redhat_tag)
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     displayName: 'Push to Redhat'
     continueOnError: true
   - script: |
-      docker pull ${quay_path}:$(Build.SourceVersion)
-      docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:latest
-      docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:${docker_version}
-      if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:$(Build.SourceVersion) ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
-      docker push ${docker_repo}:${docker_version}
+      docker pull $(quay_path):$(Build.SourceVersion)
+      docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
+      docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
+      if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2) ; fi
+      docker push $(docker_repo):$(docker_version)
     displayName: 'Push to DockerHub'
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
@@ -88,11 +88,11 @@ steps:
 
     # - script: |
     #     docker login https://quay.io
-    #     docker pull ${quay_path}:${quay_tag}
-    #     docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
-    #     docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
-    #     if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
-    #     docker push ${docker_repo}:${docker_version}
+    #     docker pull $(quay_path):${quay_tag}
+    #     docker tag $(quay_path):${quay_tag} $(docker_repo):latest
+    #     docker tag $(quay_path):${quay_tag} $(docker_repo):$(docker_version)
+    #     if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag $(quay_path):${quay_tag} $(docker_repo):${docker_version:0:${#docker_version}-2} ; fi
+    #     docker push $(docker_repo):$(docker_version)
     #   displayName: 'Push to DockerHub'
     #   continueOnError: false
 
@@ -170,14 +170,14 @@ steps:
 # #   jobs:
 # #     - job: deploy_to_redhat
 # #       steps:
-# #         - script: podman login -u unused scan.connect.redhat.com -p ${redhat_password}
+# #         - script: podman login -u unused scan.connect.redhat.com -p $(redhat_password}
 # #           displayName: 'Login to redhat portal'
 # #         - script: |
-# #             podman pull ${quay_path}:$(Build.SourceVersion)
-# #             podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+# #             podman pull $(quay_path):$(Build.SourceVersion)
+# #             podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
 # #           displayName: 'Pull image from quay and tag'
 # #         - script: |
-# #             podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+# #             podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/$(redhat_prj):$(redhat_tag)
 # #           displayName: 'Push to redhat portal'
 
 # # - stage: DeploytoDockerhub
@@ -199,15 +199,15 @@ steps:
 # # #            command: login
 # # #            containerRegistry: $(quayConnection)
 # #         - script: |
-# #             docker pull ${quay_path}:$(Build.SourceVersion)
-# #             docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
-# #             docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
-# #             if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+# #             docker pull $(quay_path):$(Build.SourceVersion)
+# #             docker tag $(quay_path):${quay_tag} $(docker_repo):latest
+# #             docker tag $(quay_path):${quay_tag} $(docker_repo):$(docker_version)
+# #             if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag $(quay_path):${quay_tag} $(docker_repo):${docker_version:0:${#docker_version}-2} ; fi
 # #           displayName: 'Pull image from quay and tag'
 # #         - script: |
-# #             docker push ${docker_repo}:${docker_version}
-# #             docker push ${docker_repo}:latest
-# #             if [[ ${docker_version: -1} -eq 0 ]] ; then docker push ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+# #             docker push $(docker_repo):$(docker_version)
+# #             docker push $(docker_repo):latest
+# #             if [[ ${docker_version: -1} -eq 0 ]] ; then docker push $(docker_repo):${docker_version:0:${#docker_version}-2} ; fi
 # #           displayName: 'Push to dockerhub'
 
 # # - stage: Deploy to DockerHub
@@ -217,11 +217,11 @@ steps:
 # #   displayName: Deploy to DockerHub
 
 # #  docker login https://quay.io
-# #  docker pull ${quay_path}:${quay_tag}
-# #  docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
-# #  docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
-# #if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
-# #  docker push ${docker_repo}:${docker_version}
+# #  docker pull $(quay_path):${quay_tag}
+# #  docker tag $(quay_path):${quay_tag} $(docker_repo):latest
+# #  docker tag $(quay_path):${quay_tag} $(docker_repo):$(docker_version)
+# #if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag $(quay_path):${quay_tag} $(docker_repo):${docker_version:0:${#docker_version}-2} ; fi
+# #  docker push $(docker_repo):$(docker_version)
 
 # #variables:
 # #  # imageName: 'f5networks/k8s-bigip-ctlr-devel'
