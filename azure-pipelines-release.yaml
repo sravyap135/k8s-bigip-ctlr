@@ -16,8 +16,8 @@ pool:
     vmImage: 'ubuntu-latest'
 
 stages:
-- stage: Build and Push to quay
-  displayName: Build and Push to quay
+- stage: Build_and_Push_to_quay
+  displayName: Build_and_Push_to_quay
   jobs:
   - job: Checkout
     steps:
@@ -53,10 +53,10 @@ stages:
         repository: $(imageName)
         tags: $(Build.SourceVersion)
 
-- stage: Deploy to Redhat portal
+- stage: Deploy_to_Redhat_portal
   dependsOn:
-  - Build and Push to quay
-  condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  - Build_and_Push_to_quay
+  condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   displayName: Deploy to Redhat portal
   variables:
 #    imageName: 'f5networks/k8s-bigip-ctlr-devel'
@@ -77,18 +77,18 @@ stages:
             podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
           displayName: 'Push to redhat portal'
 
-- stage: Deploy to Dockerhub
+- stage: DeploytoDockerhub
   dependsOn:
-    - Build and Push to quay
-  condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
-  displayName: Deploy to Dockerhub
+    - Build_and Push to quay
+  condition: and(succeeded('Build_and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  displayName: Deploy_to_Dockerhub
   variables:
     quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
     quay_tag: 'latest'
     docker_repo: 'sraf5/k8s-bigip-ctlr'
     docker_version: '8.90.0'
   jobs:
-    - job: deploy-to-redhat
+    - job: deploytoredhat
       steps:
 #        - task: Docker@2
 #          displayName: Login to quay registry
@@ -109,8 +109,8 @@ stages:
 
 # - stage: Deploy to DockerHub
 #   dependsOn:
-#   - Build and Push to quay
-#   condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+#   - Build_and Push to quay
+#   condition: and(succeeded('Build_and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
 #   displayName: Deploy to DockerHub
 
 #  docker login https://quay.io
