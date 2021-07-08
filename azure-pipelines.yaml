@@ -28,6 +28,44 @@ variables:
   redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
   docker_repo: 'sraf5/k8s-bigip-ctlr'
   docker_version: '35.56.0'
+steps:
+  - task: Docker@2
+    displayName: Login to redhat registry
+    inputs:
+      command: login
+      containerRegistry: $(redhatConnection)
+  - task: Docker@2
+    displayName: Login to quay registry
+    inputs:
+      command: login
+      containerRegistry: $(quayConnection)
+  - task: CmdLine@2
+    displayName: Check documentation
+    inputs:
+      script: 'make docs'
+  - task: Docker@2
+    displayName: Build from Red Hat Universal Base Image
+    inputs:
+      command: build
+      containerRegistry: $(quayConnection)
+      repository: $(imageName)
+      Dockerfile: build-tools/Dockerfile-int
+      buildContext: .
+      tags: $(Build.SourceVersion)
+      arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
+  - task: Docker@2
+    displayName: Push image to quay.io
+    inputs:
+      command: push
+      containerRegistry: $(quayConnection)
+      repository: $(imageName)
+      tags: $(Build.SourceVersion)
+  - script: |
+      podman login -u unused scan.connect.redhat.com -p ${redhat_password}
+      podman pull ${quay_path}:$(Build.SourceVersion)
+      podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+      podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+    condition:  and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
 
 
 
@@ -47,42 +85,3 @@ variables:
     #     docker push ${docker_repo}:${docker_version}
     #   displayName: 'Push to DockerHub'
     #   continueOnError: false
-
-
-- task: Docker@2
-  displayName: Login to redhat registry
-  inputs:
-    command: login
-    containerRegistry: $(redhatConnection)
-- task: Docker@2
-  displayName: Login to quay registry
-  inputs:
-    command: login
-    containerRegistry: $(quayConnection)
-- task: CmdLine@2
-  displayName: Check documentation
-  inputs:
-    script: 'make docs'
-- task: Docker@2
-  displayName: Build from Red Hat Universal Base Image
-  inputs:
-    command: build
-    containerRegistry: $(quayConnection)
-    repository: $(imageName)
-    Dockerfile: build-tools/Dockerfile-int
-    buildContext: .
-    tags: $(Build.SourceVersion)
-    arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
-- task: Docker@2
-  displayName: Push image to quay.io
-  inputs:
-    command: push
-    containerRegistry: $(quayConnection)
-    repository: $(imageName)
-    tags: $(Build.SourceVersion)
-- script: |
-    podman login -u unused scan.connect.redhat.com -p ${redhat_password}
-    podman pull ${quay_path}:$(Build.SourceVersion)
-    podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-    podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-  condition:  and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
