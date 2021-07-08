@@ -7,10 +7,11 @@ trigger:
   branches:
     include:
       - release_automation
+#      - master
   tags:
     include:
-      - v2.*
-#    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/') # Only run this step when the trigger event is a tag push
+      - v*
+
 pool:
     vmImage: 'ubuntu-latest'
 
@@ -57,84 +58,134 @@ stages:
   - Build and Push to quay
   condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   displayName: Deploy to Redhat portal
+  variables:
+#    imageName: 'f5networks/k8s-bigip-ctlr-devel'
+    quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
+#    quay_tag: 'latest'
+    redhat_prj_name: 'cntr-ingress-svcs'
+    redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
   jobs:
-    - job: deploy to redhat
+    - job: deploy-to-redhat
       steps:
-        - template: ./azure-deploy-template.yaml
-- stage: Deploy to DockerHub
+        - script: podman login -u unused scan.connect.redhat.com -p ${redhat_password}
+          displayName: 'Login to redhat portal'
+        - script: |
+            podman pull ${quay_path}:$(Build.SourceVersion)
+            podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+          displayName: 'Pull image from quay and tag'
+        - script: |
+            podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+          displayName: 'Push to redhat portal'
+
+- stage: Deploy to Dockerhub
   dependsOn:
-  - Build and Push to quay
+    - Build and Push to quay
   condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
-  displayName: Deploy to DockerHub
+  displayName: Deploy to Dockerhub
+  variables:
+    quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
+    quay_tag: 'latest'
+    docker_repo: 'sraf5/k8s-bigip-ctlr'
+    docker_version: '8.90.0'
+  jobs:
+    - job: deploy-to-redhat
+      steps:
+#        - task: Docker@2
+#          displayName: Login to quay registry
+#          inputs:
+#            command: login
+#            containerRegistry: $(quayConnection)
+        - script: |
+            docker pull ${quay_path}:$(Build.SourceVersion)
+            docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
+            docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
+            if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+          displayName: 'Pull image from quay and tag'
+        - script: |
+            docker push ${docker_repo}:${docker_version}
+            docker push ${docker_repo}:latest
+            if [[ ${docker_version: -1} -eq 0 ]] ; then docker push ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+          displayName: 'Push to dockerhub'
+
+# - stage: Deploy to DockerHub
+#   dependsOn:
+#   - Build and Push to quay
+#   condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+#   displayName: Deploy to DockerHub
+
+#  docker login https://quay.io
+#  docker pull ${quay_path}:${quay_tag}
+#  docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
+#  docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
+#if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+#  docker push ${docker_repo}:${docker_version}
+
+#variables:
+#  # imageName: 'f5networks/k8s-bigip-ctlr-devel'
+#  imageName: 'sravyap135/k8s-bigip-ctlr'
+#  dockerRepo: 'sraf5/azure-poc'
+#  redhatRepo: 'f5networks/k8s-bigip-ctlr'
+#  quayConnection: 'quay-bot'
+#  dockerConnection: 'docker-bot'
+#  redhatConnection: 'redhat-bot'
+#  redhatPush: 'redhat-push'
+#  relVersion: '1.0'
+#  # scan.connect.redhat.com
 
 
-
-variables:
-  # imageName: 'f5networks/k8s-bigip-ctlr-devel'
-  imageName: 'sravyap135/k8s-bigip-ctlr'
-  dockerRepo: 'sraf5/azure-poc'
-  redhatRepo: 'f5networks/k8s-bigip-ctlr'
-  quayConnection: 'quay-bot'
-  dockerConnection: 'docker-bot'
-  redhatConnection: 'redhat-bot'
-  redhatPush: 'redhat-push'
-  relVersion: '1.0'
-  # scan.connect.redhat.com
-
-
-steps:
-  - task: Docker@2
-    displayName: Login to redhat registry
-    inputs:
-      command: login
-      containerRegistry: $(redhatConnection)
-  - task: Docker@2
-    displayName: Login to quay registry
-    inputs:
-      command: login
-      containerRegistry: $(quayConnection)
-  - task: Docker@2
-    displayName: Login to docker registry
-    inputs:
-      command: login
-      containerRegistry: $(dockerConnection)
-  # - task: CmdLine@2
-  #   displayName: Check documentation
-  #   inputs:
-  #     script: 'make docs'
-  - task: Docker@2
-    displayName: Build from Red Hat Universal Base Image
-    inputs:
-      command: build
-      containerRegistry: $(dockerConnection)
-      repository: $(dockerRepo)
-      Dockerfile: build-tools/Dockerfile-int
-      buildContext: .
-      tags: latest
-      arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
-#  - task: Docker@2
-#    displayName: Push image to quay.io
-#    inputs:
-#      command: push
-#      containerRegistry: $(quayConnection)
-#      repository: $(imageName)
-#      tags: latest
-  - task: Docker@2
-    displayName: Push image to docker registry
-    inputs:
-      command: push
-      containerRegistry: $(dockerConnection)
-      repository: $(dockerRepo)
-      tags: |
-        $(relVersion)
-        latest
-#  - task: Docker@2
-#    displayName: Push image to redhat registry
-#    inputs:
-#      command: push
-#      containerRegistry: $(redhatConnection)
-#      repository: $(dockerRepo)
-#      tags: |
-#        $(BUILD_VERSION)
-#        latest
+# steps:
+#   - task: Docker@2
+#     displayName: Login to redhat registry
+#     inputs:
+#       command: login
+#       containerRegistry: $(redhatConnection)
+#   - task: Docker@2
+#     displayName: Login to quay registry
+#     inputs:
+#       command: login
+#       containerRegistry: $(quayConnection)
+#   - task: Docker@2
+#     displayName: Login to docker registry
+#     inputs:
+#       command: login
+#       containerRegistry: $(dockerConnection)
+#   # - task: CmdLine@2
+#   #   displayName: Check documentation
+#   #   inputs:
+#   #     script: 'make docs'
+#   - task: Docker@2
+#     displayName: Build from Red Hat Universal Base Image
+#     inputs:
+#       command: build
+#       containerRegistry: $(dockerConnection)
+#       repository: $(dockerRepo)
+#       Dockerfile: build-tools/Dockerfile-int
+#       buildContext: .
+#       tags: latest
+#       arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
+# #  - task: Docker@2
+# #    displayName: Push image to quay.io
+# #    inputs:
+# #      command: push
+# #      containerRegistry: $(quayConnection)
+# #      repository: $(imageName)
+# #      tags: latest
+#   - task: Docker@2
+#     displayName: Push image to docker registry
+#     inputs:
+#       command: push
+#       containerRegistry: $(dockerConnection)
+#       repository: $(dockerRepo)
+#       tags: |
+#         $(relVersion)
+#         latest
+# #  - task: Docker@2
+# #    displayName: Push image to redhat registry
+# #    inputs:
+# #      command: push
+# #      containerRegistry: $(redhatConnection)
+# #      repository: $(dockerRepo)
+# #      tags: |
+# #        $(BUILD_VERSION)
+# #        latest
 
