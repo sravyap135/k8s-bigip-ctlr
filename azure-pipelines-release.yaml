@@ -7,9 +7,9 @@
 #   none
 
 trigger:
-  branches:
-   include:
-     - release_automation
+  # branches:
+  #  include:
+  #    - release_automation
   tags:
     include:
     - v*
@@ -26,6 +26,7 @@ variables:
   quay_tag: 'latest'
   redhat_prj_name: 'cntr-ingress-svcs'
   redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
+  redhat_tag: '35.36.0-rhel7'
   docker_repo: 'sraf5/k8s-bigip-ctlr'
   docker_version: '35.56.0'
 steps:
@@ -60,19 +61,28 @@ steps:
       containerRegistry: $(quayConnection)
       repository: $(imageName)
       tags: $(Build.SourceVersion)
+
   - script: |
       podman login -u unused scan.connect.redhat.com -p $(redhat_password)
       podman pull $(quay_path):$(Build.SourceVersion)
-      podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj):$(redhat_tag)
-      podman push scan.connect.redhat.com/${redhat_prj_id}/$(redhat_prj):$(redhat_tag)
+      podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
+      podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
+      podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
+      podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
     condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     displayName: 'Push to Redhat'
     continueOnError: true
+    
   - script: |
       docker pull $(quay_path):$(Build.SourceVersion)
       docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
       docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
-      if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2) ; fi
+      if [[ $(docker_version: -1) -eq 0 ]]
+      then 
+        docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+      fi
+      docker push $(docker_repo):$(docker_version)
       docker push $(docker_repo):$(docker_version)
     displayName: 'Push to DockerHub'
     condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
