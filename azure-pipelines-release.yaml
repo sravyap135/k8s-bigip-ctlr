@@ -18,6 +18,10 @@ pool:
 stages:
 - stage: Build_and_Push_to_quay
   displayName: Build_and_Push_to_quay
+  variables:
+    imageName: 'sravyap135/k8s-bigip-ctlr'
+    quayConnection: 'quay-bot'
+    redhatConnection: 'redhat-bot'
   jobs:
   - job: Checkout
     steps:
