@@ -80,7 +80,7 @@ stages:
 - stage: DeploytoDockerhub
   dependsOn:
     - Build_and Push to quay
-  condition: and(succeeded('Build_and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
   displayName: Deploy_to_Dockerhub
   variables:
     quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
@@ -88,7 +88,7 @@ stages:
     docker_repo: 'sraf5/k8s-bigip-ctlr'
     docker_version: '8.90.0'
   jobs:
-    - job: deploytoredhat
+    - job: deploytodocker
       steps:
 #        - task: Docker@2
 #          displayName: Login to quay registry
