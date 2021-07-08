@@ -4,13 +4,70 @@
 # https://aka.ms/yaml
 
 trigger:
-  - release_automation
-
+  branches:
+    include:
+      - release_automation
+  tags:
+    include:
+      - v2.*
 #    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/') # Only run this step when the trigger event is a tag push
-
-
 pool:
-  vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Build and Push to quay
+  displayName: Build and Push to quay
+  jobs:
+  - job: Checkout
+    steps:
+    - task: Docker@2
+      displayName: Login to redhat registry
+      inputs:
+        command: login
+        containerRegistry: $(redhatConnection)
+    - task: Docker@2
+      displayName: Login to quay registry
+      inputs:
+        command: login
+        containerRegistry: $(quayConnection)
+    - task: CmdLine@2
+      displayName: Check documentation
+      inputs:
+        script: 'make docs'
+    - task: Docker@2
+      displayName: Build from Red Hat Universal Base Image
+      inputs:
+        command: build
+        containerRegistry: $(quayConnection)
+        repository: $(imageName)
+        Dockerfile: build-tools/Dockerfile-int
+        buildContext: .
+        tags: $(Build.SourceVersion)
+        arguments: "--build-arg BUILD_INFO=azure-$(Build.BuildId)-$(Build.SourceVersion) --build-arg BUILD_VERSION=$(BUILD_VERSION) --build-arg RUN_TESTS=$(RUN_TESTS)"
+    - task: Docker@2
+      displayName: Push image to quay.io
+      inputs:
+        command: push
+        containerRegistry: $(quayConnection)
+        repository: $(imageName)
+        tags: $(Build.SourceVersion)
+
+- stage: Deploy to Redhat portal
+  dependsOn:
+  - Build and Push to quay
+  condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  displayName: Deploy to Redhat portal
+  jobs:
+    - job: deploy to redhat
+      steps:
+        - template: ./azure-deploy-template.yaml
+- stage: Deploy to DockerHub
+  dependsOn:
+  - Build and Push to quay
+  condition: and(succeeded('Build and Push to quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+  displayName: Deploy to DockerHub
+
+
 
 variables:
   # imageName: 'f5networks/k8s-bigip-ctlr-devel'
@@ -23,6 +80,8 @@ variables:
   redhatPush: 'redhat-push'
   relVersion: '1.0'
   # scan.connect.redhat.com
+
+
 steps:
   - task: Docker@2
     displayName: Login to redhat registry
