@@ -57,59 +57,59 @@ stages:
         repository: $(imageName)
         tags: $(Build.SourceVersion)
 
-- stage: Deploy_to_Redhat_portal
-  dependsOn:
-  - Build_and_Push_to_quay
-  condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
-  displayName: Deploy to Redhat portal
-  variables:
-#    imageName: 'f5networks/k8s-bigip-ctlr-devel'
-    quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
-#    quay_tag: 'latest'
-    redhat_prj_name: 'cntr-ingress-svcs'
-    redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
-  jobs:
-    - job: deploy_to_redhat
-      steps:
-        - script: podman login -u unused scan.connect.redhat.com -p ${redhat_password}
-          displayName: 'Login to redhat portal'
-        - script: |
-            podman pull ${quay_path}:$(Build.SourceVersion)
-            podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-          displayName: 'Pull image from quay and tag'
-        - script: |
-            podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
-          displayName: 'Push to redhat portal'
+# - stage: Deploy_to_Redhat_portal
+#   dependsOn:
+#   - Build_and_Push_to_quay
+#   condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+#   displayName: Deploy to Redhat portal
+#   variables:
+# #    imageName: 'f5networks/k8s-bigip-ctlr-devel'
+#     quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
+# #    quay_tag: 'latest'
+#     redhat_prj_name: 'cntr-ingress-svcs'
+#     redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
+#   jobs:
+#     - job: deploy_to_redhat
+#       steps:
+#         - script: podman login -u unused scan.connect.redhat.com -p ${redhat_password}
+#           displayName: 'Login to redhat portal'
+#         - script: |
+#             podman pull ${quay_path}:$(Build.SourceVersion)
+#             podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+#           displayName: 'Pull image from quay and tag'
+#         - script: |
+#             podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+#           displayName: 'Push to redhat portal'
 
-- stage: DeploytoDockerhub
-  dependsOn:
-    - Build_and_Push_to_quay
-  condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
-  displayName: Deploy_to_Dockerhub
-  variables:
-    quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
-    quay_tag: 'latest'
-    docker_repo: 'sraf5/k8s-bigip-ctlr'
-    docker_version: '8.90.0'
-  jobs:
-    - job: deploytodocker
-      steps:
-#        - task: Docker@2
-#          displayName: Login to quay registry
-#          inputs:
-#            command: login
-#            containerRegistry: $(quayConnection)
-        - script: |
-            docker pull ${quay_path}:$(Build.SourceVersion)
-            docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
-            docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
-            if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
-          displayName: 'Pull image from quay and tag'
-        - script: |
-            docker push ${docker_repo}:${docker_version}
-            docker push ${docker_repo}:latest
-            if [[ ${docker_version: -1} -eq 0 ]] ; then docker push ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
-          displayName: 'Push to dockerhub'
+# - stage: DeploytoDockerhub
+#   dependsOn:
+#     - Build_and_Push_to_quay
+#   condition: and(succeeded('Build_and_Push_to_quay'), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+#   displayName: Deploy_to_Dockerhub
+#   variables:
+#     quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
+#     quay_tag: 'latest'
+#     docker_repo: 'sraf5/k8s-bigip-ctlr'
+#     docker_version: '8.90.0'
+#   jobs:
+#     - job: deploytodocker
+#       steps:
+# #        - task: Docker@2
+# #          displayName: Login to quay registry
+# #          inputs:
+# #            command: login
+# #            containerRegistry: $(quayConnection)
+#         - script: |
+#             docker pull ${quay_path}:$(Build.SourceVersion)
+#             docker tag ${quay_path}:${quay_tag} ${docker_repo}:latest
+#             docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version}
+#             if [[ ${docker_version: -1} -eq 0 ]] ; then docker tag ${quay_path}:${quay_tag} ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+#           displayName: 'Pull image from quay and tag'
+#         - script: |
+#             docker push ${docker_repo}:${docker_version}
+#             docker push ${docker_repo}:latest
+#             if [[ ${docker_version: -1} -eq 0 ]] ; then docker push ${docker_repo}:${docker_version:0:${#docker_version}-2} ; fi
+#           displayName: 'Push to dockerhub'
 
 # - stage: Deploy to DockerHub
 #   dependsOn:
