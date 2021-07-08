@@ -27,7 +27,7 @@ variables:
   redhat_prj_name: 'cntr-ingress-svcs'
   redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
   docker_repo: 'sraf5/k8s-bigip-ctlr'
-  docker_version: 'reltest'
+  docker_version: '35.56.0'
 
 
 
@@ -80,3 +80,9 @@ variables:
     containerRegistry: $(quayConnection)
     repository: $(imageName)
     tags: $(Build.SourceVersion)
+- script: |
+    podman login -u unused scan.connect.redhat.com -p ${redhat_password}
+    podman pull ${quay_path}:$(Build.SourceVersion)
+    podman tag ${quay_path}:$(Build.SourceVersion) scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+    podman push scan.connect.redhat.com/ospid-97f1d737-c6a7-48e8-9767-15adab474ce8/${redhat_prj}:${redhat_tag}
+  condition:  and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
