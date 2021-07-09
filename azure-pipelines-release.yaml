@@ -22,6 +22,8 @@ variables:
   imageName: 'sravyap135/k8s-bigip-ctlr'
   quayConnection: 'quay-bot'
   redhatConnection: 'redhat-bot'
+  dockerConnection: 'docker-bot'
+  scanConnection: 'scan-bot'
   quay_path: 'quay.io/sravyap135/k8s-bigip-ctlr'
   quay_tag: 'latest'
   redhat_prj_name: 'cntr-ingress-svcs'
@@ -40,6 +42,19 @@ steps:
     inputs:
       command: login
       containerRegistry: $(quayConnection)
+        
+  - task: Docker@2
+    displayName: Login to docker registry
+    inputs:
+      command: login
+      containerRegistry: $(dockerConnection)
+    
+  - task: Docker@2
+    displayName: Login to redhat scan registry
+    inputs:
+      command: login
+      containerRegistry: $(scanConnection)
+
   # - task: CmdLine@2
   #   displayName: Check documentation
   #   inputs:
@@ -70,8 +85,8 @@ steps:
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         echo 'Logging in'
         podman help
-        echo $(REDHAT_PASSWORD)
-        podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
+        # echo $(REDHAT_PASSWORD)
+        # podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
         echo 'Logged in'
         podman pull $(quay_path):${my_tag}
         podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
