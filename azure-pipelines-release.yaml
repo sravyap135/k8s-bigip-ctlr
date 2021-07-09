@@ -88,7 +88,8 @@ steps:
         # echo $(REDHAT_PASSWORD)
         # podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
         echo 'Logged in'
-        podman pull $(quay_path):${my_tag}
+        docker pull $(quay_path):${my_tag}
+        echo 'Pulled '
         podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
         podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
       
