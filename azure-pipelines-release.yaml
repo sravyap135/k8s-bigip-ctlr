@@ -26,7 +26,7 @@ variables:
   quay_tag: 'latest'
   redhat_prj_name: 'cntr-ingress-svcs'
   redhat_prj_id: 'ospid-97f1d737-c6a7-48e8-9767-15adab474ce8'
-  redhat_tag: '35.36.0-rhel7'
+  redhat_tag: '$(BUILD_VERSION)-testrhel7'
   docker_repo: 'sraf5/k8s-bigip-ctlr'
   docker_version: '35.56.0'
 steps:
@@ -65,19 +65,24 @@ steps:
   - task: CmdLine@2
     inputs:
       script: |
+        set -ex
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         echo 'Logging in'
+        podman help
         podman login -u unused scan.connect.redhat.com -p $(REDHAT_PASSWORD)
         echo 'Logged in'
         # podman login https://quay.io
-        podman pull $(quay_path):$(Build.SourceVersion)
+        podman pull $(quay_path):${my_tag}
+        podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
+        podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
+      
         echo 'Pulled '
         # podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
-        podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
+        # podman tag $(quay_path):$(Build.SourceVersion) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
         echo 'Tagged'
         podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
         # podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
-    condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+    # condition: and(succeeded(), startsWith(variables['build.sourceBranch'], 'refs/tags/'))
     displayName: 'Push to Redhat'
 
     continueOnError: true
@@ -107,6 +112,7 @@ steps:
     # - script: | 
     #     podman login -u unused -p $(redhatp) scan.connect.redhat.com
     #     podman pull $(quay_path):$(quay_tag)
+    #     #     podman tag $(quay_path):$(quay_tag) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
     #     podman tag $(quay_path):$(quay_tag) scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
     #     podman push scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
     #   displayName: 'Push to Redhat'
