@@ -69,6 +69,7 @@ steps:
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         echo 'Logging in'
         podman help
+        echo $(REDHAT_PASSWORD)
         podman login -u unused scan.connect.redhat.com -p $(REDHAT_PASSWORD)
         echo 'Logged in'
         # podman login https://quay.io
