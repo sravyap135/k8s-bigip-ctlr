@@ -88,7 +88,7 @@ steps:
         # echo $(REDHAT_PASSWORD)
         # podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
         echo 'Logged in'
-        docker pull $(quay_path):${my_tag}
+        podman pull --log-level debug $(quay_path):${my_tag}
         echo 'Pulled '
         podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):latest
         podman tag $(quay_path):${my_tag} scan.connect.redhat.com/$(redhat_prj_id)/$(redhat_prj_name):$(redhat_tag)
@@ -104,26 +104,26 @@ steps:
 
     continueOnError: true
     
-  - script: |
-        set -ex
-        my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
-        docker pull $(quay_path):${my_tag}
-        docker tag $(quay_path):${my_tag} $(docker_repo):latest
-        docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
-        docker push $(docker_repo):$(docker_version)
-    #   docker pull $(quay_path):$(Build.SourceVersion)
-    #   docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
-    #   docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
-    #   if [[ $(docker_version: -1) -eq 0 ]]
-    #   then 
-    #     docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-    #     docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-    #   fi
+#   - script: |
+#         set -ex
+#         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
+#         docker pull $(quay_path):${my_tag}
+#         docker tag $(quay_path):${my_tag} $(docker_repo):latest
+#         docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
+#         docker push $(docker_repo):$(docker_version)
+#     #   docker pull $(quay_path):$(Build.SourceVersion)
+#     #   docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
+#     #   docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
+#     #   if [[ $(docker_version: -1) -eq 0 ]]
+#     #   then 
+#     #     docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+#     #     docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+#     #   fi
         
-    #   docker push $(docker_repo):$(docker_version)
+#     #   docker push $(docker_repo):$(docker_version)
 
-    displayName: 'Push to DockerHub'
-    # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+#     displayName: 'Push to DockerHub'
+#     # condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
 
 
