@@ -62,15 +62,18 @@ steps:
 #       repository: $(imageName)
 #       tags: $(Build.SourceVersion)
 
-  - task: CmdLine@2
-    inputs:
-      script: |
+#   - task: CmdLine@2
+#     inputs:
+#       script: |
+  - script: |
         set -ex
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         echo 'Logging in'
         podman help
         echo $(REDHAT_PASSWORD)
-        podman login -u unused scan.connect.redhat.com -p $(REDHAT_PASSWORD)
+        ls -l /home/vsts/work/_temp/DockerConfig_1625810481678
+        export DOCKER_CONFIG=./.docker
+        podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
         echo 'Logged in'
         # podman login https://quay.io
         podman pull $(quay_path):${my_tag}
@@ -88,19 +91,20 @@ steps:
 
     continueOnError: true
     
-  # - script: |
-  #     docker pull $(quay_path):$(Build.SourceVersion)
-  #     docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
-  #     docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
-  #     if [[ $(docker_version: -1) -eq 0 ]]
-  #     then 
-  #       docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-  #       docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-  #     fi
-  #     docker push $(docker_repo):$(docker_version)
-  #     docker push $(docker_repo):$(docker_version)
-  #   displayName: 'Push to DockerHub'
-  #   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+  - script: |
+      set -ex
+      docker pull $(quay_path):$(Build.SourceVersion)
+      docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):latest
+      docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version)
+      if [[ $(docker_version: -1) -eq 0 ]]
+      then 
+        docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+      fi
+      docker push $(docker_repo):$(docker_version)
+      docker push $(docker_repo):$(docker_version)
+    displayName: 'Push to DockerHub'
+    condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
 # container:
 #   #      podman login https://quay.io
