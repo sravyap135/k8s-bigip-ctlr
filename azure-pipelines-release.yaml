@@ -71,8 +71,8 @@ steps:
         echo 'Logging in'
         podman help
         echo $(REDHAT_PASSWORD)
-        ls -l /home/vsts/work/_temp/DockerConfig_1625810481678
-        export DOCKER_CONFIG=./.docker
+        # ls -l /home/vsts/work/_temp/DockerConfig_1625810481678
+        # export DOCKER_CONFIG=./.docker
         podman login -u unused -p $(REDHAT_PASSWORD) scan.connect.redhat.com
         echo 'Logged in'
         # podman login https://quay.io
