@@ -43,7 +43,7 @@ F5 IPAM Controller v0.1.4
 
 Added Functionality
 ```````````````````
-* F5 IPAM Controller supports InfoBlox (Preview - Available for VirtualServer CRD only. See `documentation <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_).
+* F5 IPAM Controller supports InfoBlox (Preview - Available for VirtualServer CR only. See `documentation <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_).
 
 
 2.4.1
