@@ -108,7 +108,6 @@ steps:
         set -ex
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         docker pull $(quay_path):${my_tag}
-        echo $(#docker_version)
         one_var=2
         len=`expr length "$(docker_version)"`
         stripped_version=`expr $(len) - $(one_var)`
