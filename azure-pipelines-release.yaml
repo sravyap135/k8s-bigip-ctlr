@@ -108,14 +108,14 @@ steps:
         set -ex
         my_tag=04ff5406dcd94385d0a399dcb718d8896a691369
         docker pull $(quay_path):${my_tag}
-        docker tag $(quay_path):${my_tag} $(docker_repo):latest
-        docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
-        docker push $(docker_repo):$(docker_version)
+        # docker tag $(quay_path):${my_tag} $(docker_repo):latest
+        # docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
+        # docker push $(docker_repo):$(docker_version)
         stripped_version=`expr $(#docker_version) - 2`
         # echo $(#docker_version)-2
         # echo $(docker_version:0:$(#docker_version)-2)
         # echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-        if [[ ${docker_version: -1} -eq 0 ]] ; then 
+        if [[ $(docker_version: -1) -eq 0 ]] ; then 
           docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version:0:$(stripped_version))
           docker push $(docker_repo):$(docker_version:0:$(stripped_version))
         fi
