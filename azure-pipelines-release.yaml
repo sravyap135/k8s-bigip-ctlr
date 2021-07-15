@@ -119,7 +119,7 @@ steps:
         if [[ "$(docker_version: -1)" == "0" ]] ; then 
           docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version:0:$(stripped_version))
           docker push $(docker_repo):$(docker_version:0:$(stripped_version))
-        # fi
+        fi
 
         # if [ "$(docker_version: -1)" == "0" ]
         # then 
