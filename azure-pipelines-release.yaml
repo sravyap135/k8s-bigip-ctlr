@@ -32,11 +32,11 @@ variables:
   docker_repo: 'sraf5/k8s-bigip-ctlr'
   docker_version: '35.56.0'
 steps:
-  - task: Docker@2
-    displayName: Login to redhat registry
-    inputs:
-      command: login
-      containerRegistry: $(redhatConnection)
+  # - task: Docker@2
+  #   displayName: Login to redhat registry
+  #   inputs:
+  #     command: login
+  #     containerRegistry: $(redhatConnection)
   - task: Docker@2
     displayName: Login to quay registry
     inputs:
@@ -49,11 +49,11 @@ steps:
       command: login
       containerRegistry: $(dockerConnection)
     
-  - task: Docker@2
-    displayName: Login to redhat scan registry
-    inputs:
-      command: login
-      containerRegistry: $(scanConnection)
+  # - task: Docker@2
+  #   displayName: Login to redhat scan registry
+  #   inputs:
+  #     command: login
+  #     containerRegistry: $(scanConnection)
 
   # - task: CmdLine@2
   #   displayName: Check documentation
@@ -111,12 +111,13 @@ steps:
         docker tag $(quay_path):${my_tag} $(docker_repo):latest
         docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
         docker push $(docker_repo):$(docker_version)
+        stripped_version=`expr $(#docker_version) - 2`
         # echo $(#docker_version)-2
         # echo $(docker_version:0:$(#docker_version)-2)
         # echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
         if [[ ${docker_version: -1} -eq 0 ]] ; then 
-          docker tag $(quay_path):${my_tag} $(docker_repo):${docker_version:0:${#docker_version}-2}
-          docker push $(docker_repo):${docker_version:0:${#docker_version}-2}
+          docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version:0:$(stripped_version))
+          docker push $(docker_repo):$(docker_version:0:$(stripped_version))
         fi
 
         # if [ "$(docker_version: -1)" == "0" ]
