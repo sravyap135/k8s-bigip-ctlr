@@ -112,15 +112,21 @@ steps:
         docker tag $(quay_path):${my_tag} $(docker_repo):$(docker_version)
         docker push $(docker_repo):$(docker_version)
         echo $(#docker_version)-2
-        echo $(docker_version:0:$(#docker_version)-2)
-        echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-        if [ "$(docker_version: -1)" == "0" ]
-        then 
-          docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-          echo $(docker_version:0:$(#docker_version)-2)
-          echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
-          docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        # echo $(docker_version:0:$(#docker_version)-2)
+        # echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        if [[ ${docker_version: -1} -eq 0 ]] ; then 
+          docker tag $(quay_path):${my_tag} $(docker_repo):${docker_version:0:${#docker_version}-2}
+          docker push $(docker_repo):${docker_version:0:${#docker_version}-2}
         fi
+
+        # if [ "$(docker_version: -1)" == "0" ]
+        # then 
+        
+        #   docker tag $(quay_path):$(Build.SourceVersion) $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        #   # echo $(docker_version:0:$(#docker_version)-2)
+        #   # echo $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        #   docker push $(docker_repo):$(docker_version:0:$(#docker_version)-2)
+        # fi
     displayName: 'Push to DockerHub'
 
         
