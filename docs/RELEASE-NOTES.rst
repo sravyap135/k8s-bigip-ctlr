@@ -1,38 +1,58 @@
 Release Notes for Container Ingress Services for Kubernetes & OpenShift
 =======================================================================
 
-Next Release
-------------
+2.5.0
+-------------
 
 Added Functionality
 ```````````````````
-* Added support for networking.k8s.io/v1 ingress and ingressClass.
-* Added support for "virtual-server.f5.com/clientssl" annotation in ingress resource.
-* Service Type LB Enhancements:
-   - Added support for Multiport service.
-   - Added support for HealthMonitor
-* Added support to send telemetry data to F5 TEEM Server 
-   - Disable this feature optionally using configuration parameter `disable-teems:"true"`
-* Added new deployment parameter `periodic-sync-interval` for configuring the periodic sync of resources
-* Added informers for kubernetes secrets to monitor the changes in secrets
-* Added support for configmaps to monitor services in same and different namespaces.
-    - Enable this support using deployment parameter `hubmode:true`
-* Helm Chart Enhancements:
-   - Added ingressClass resource installation with charts
-* Added support for AS3 3.28
+* CIS now compatible with:
+    - Kubernetes 1.21
+    - OpenShift 4.7.13 with OpenShift SDN
+    - AS3 3.28
+
+* Added support for:
+    - Multiport Service and Health Monitor for Service type LoadBalancer in CRD mode. Refer for `examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/crd/serviceTypeLB>`_.
+    - :issues:`1824` Support for Kubernetes networking.k8s.io/v1 Ingress and IngressClass. Refer for `examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/ingress/networkingV1>`_.
+    - For networking.k8s.io/v1 Ingress, add multiple BIGIP SSL client profiles with annotation ``virtual-server.f5.com/clientssl``. Refer for `examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/ingress/networkingV1>`_.
+    - OpenShift route annotations ``virtual-server.f5.com/rewrite-app-root`` (`examples <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/openshift/routes/sample-route-rewrite-app-root.yaml>`_) and ``virtual-server.f5.com/rewrite-target-url`` (`examples <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/openshift/routes/sample-route-rewrite-target-url.yaml>`_) with agent AS3.
+    - :issues:`1570` iRule reference in TransportServer CRD.  Refer for `examples <https://github.com/F5Networks/k8s-bigip-ctlr/tree/master/docs/config_examples/crd/TransportServer>`_.
+    - CIS deployment configuration options:
+         * ``--periodic-sync-interval`` - Configure the periodic sync of Kubernetes resources.
+         * ``--hubmode`` - Enable Support for ConfigMaps to monitor services in same and different namespaces.
+         * ``--disable-teems`` - Configure to send anonymous analytics data to F5.
+* CIS now monitors changes to Kubernetes Secret resource.
+* Improved performance while processing Ingress resources.
+* CIS in AS3 agent mode now adds default cipher groups to SSL profiles for TLS v1.3.
+* CIS now supports `F5 IPAM Controller 0.1.4 <https://github.com/F5Networks/f5-ipam-controller/blob/main/docs/RELEASE-NOTES.rst>`_.
+
+* Helm Chart Enhancements includes:
+    - Latest CRD schemas
+    - IngressClass installation
+
+Bugs Fixes
+``````````
+* CIS now properly adds nodes as pool members (in NodePort mode).
 
 
-Bug Fixes
-`````````
-* :issues: `1824` Support for ingresses.networking.k8s.io/v1.
-* Fixed rewrite-url annotation doesnt support to rewrite all child paths to specific target domain
+Known Issues
+````````````
+* For improved performance, configure CIS deployment with ``--periodic-sync-interval`` more than 300 seconds. OpenShift Routes with termination Passthrough get processed post this interval.
 
-* Fixed http redirect not working when used virtual-server.f5.com/rewrite-target-url annotation with routes
-* Fixed inconsistent behaviour with CIS (Transport Server) while adding/deleting a node to cluster.
+Note
+````
+* CIS 2.5 supports Kubenetes networking.k8s.io/v1 Ingress and IngressClass. With Kubernetes > 1.18, update CIS ClusterRole (refer for `example <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/crd/Install/clusterrole.yml>`_) and create IngressClass (refer for `example <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/ingress/networkingV1/example-default-ingress-class.yaml>`_) before version upgrade.
+* To upgrade CIS using operator in OpenShift, 
+  - Install `IngressClass <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/ingress/networkingV1/example-default-ingress-class.yaml>_` manually if CIS is monitoring ingress resource. 
+  - Install `CRDs <https://raw.githubusercontent.com/F5Networks/k8s-bigip-ctlr/master/docs/config_examples/crd/Install/customresourcedefinitions.yml>_` manually if using CIS CustomResources (VirtualServer/TransportServer/IngressLink).
 
-Limitations
-```````````
-* Due to networking.k8s.io/v1 api support in ingress customer has to use "virtual-server.f5.com/clientssl" annotation in ingress if they are using bigip profiles in tls spec of ingress resource.
+
+F5 IPAM Controller v0.1.4
+``````````````````````````
+
+Added Functionality
+```````````````````
+* F5 IPAM Controller supports InfoBlox (Preview - Available for VirtualServer CR only. See `documentation <https://github.com/F5Networks/f5-ipam-controller/blob/main/README.md>`_).
 
 
 2.4.1
@@ -45,8 +65,8 @@ Added Functionality
 
 Bug Fixes
 `````````
-* :issues: `1737` Inconsistent ordering of policy rules when adding an Ingress path.
-* :issues: `1808` K8S BIG-IP Controller upload old certificate to BIG-IP.
+* :issues:`1737` Inconsistent ordering of policy rules when adding an Ingress path.
+* :issues:`1808` K8S BIG-IP Controller upload old certificate to BIG-IP.
 * Stale IPAM CR configuration gets deleted on CIS restart.
 * IPAM allocated IP address now populates for VirtualServer under VSAddress column.
 * CIS supports endpoints created without nodeNames in Cluster mode for Headless Service.
